@@ -1,0 +1,87 @@
+# Before the first run, create the shared vector-store directory on the host:
+#     mkdir -p vector_store
+# The app runs as a non-root user inside the container; if Docker has to create
+# the bind-mount directory itself it will be root-owned and the KB build fails.
+
+services:
+  # ─── Ollama (LLM + embeddings) ────────────────────────────────────────────
+  # Only needed for a fully containerised setup. If Ollama already runs on the
+  # host (the default OLLAMA_HOST below), you can skip it:
+  #     docker compose up bodyguard --no-deps
+  ollama:
+    image: ollama/ollama:latest
+    container_name: bodyguard-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+
+  # ─── Knowledge base builder (run once, then exits) ────────────────────────
+  kb-builder:
+    build: .
+    container_name: bodyguard-kb-builder
+    command: >
+      python -m kb.builder
+        --source test/demo
+        --output vector_store
+        --ollama-host ${OLLAMA_HOST:-http://host.docker.internal:11434}
+        --force
+    volumes:
+      - ./vector_store:/app/vector_store
+    profiles:
+      - build   # run only with: docker compose --profile build up kb-builder
+
+  # ─── Knowledge base builder from BigQuery (optional) ─────────────────────
+  kb-builder-bq:
+    build: .
+    container_name: bodyguard-kb-builder-bq
+    command: >
+      python -m kb.builder
+        --bigquery ${BQ_PROJECT:-bodyguard-bh2026}.${BQ_DATASET:-bodyguard_demo}
+        --output vector_store
+        --ollama-host ${OLLAMA_HOST:-http://host.docker.internal:11434}
+        --force
+    volumes:
+      - ./vector_store:/app/vector_store
+      # Mount GCP credentials if available (set GOOGLE_APPLICATION_CREDENTIALS on host)
+      - ${GOOGLE_APPLICATION_CREDENTIALS:-/dev/null}:/gcp/credentials.json:ro
+    environment:
+      - GOOGLE_APPLICATION_CREDENTIALS=/gcp/credentials.json
+    profiles:
+      - build-bq   # run with: docker compose --profile build-bq up kb-builder-bq
+
+  # ─── Web app ──────────────────────────────────────────────────────────────
+  bodyguard:
+    build: .
+    container_name: bodyguard-app
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./vector_store:/app/vector_store:ro
+      # Optional: mount GCP credentials for the BigQuery live-query button
+      - ${GOOGLE_APPLICATION_CREDENTIALS:-/dev/null}:/gcp/credentials.json:ro
+    environment:
+      # Default: use Ollama on the host (models already pulled locally).
+      # Fully containerised: set OLLAMA_HOST=http://ollama:11434 and pull the models inside:
+      #     docker exec bodyguard-ollama ollama pull llama3.2
+      #     docker exec bodyguard-ollama ollama pull jina/jina-embeddings-v2-base-en
+      - OLLAMA_HOST=${OLLAMA_HOST:-http://host.docker.internal:11434}
+      - EMBED_MODEL=${EMBED_MODEL:-jina/jina-embeddings-v2-base-en}
+      - LLM_MODEL=${LLM_MODEL:-llama3.2}
+      - VECTOR_STORE=/app/vector_store
+      - PORT=5001
+      - BQ_PROJECT=${BQ_PROJECT:-bodyguard-bh2026}
+      - BQ_DATASET=${BQ_DATASET:-bodyguard_demo}
+      - GOOGLE_APPLICATION_CREDENTIALS=/gcp/credentials.json
+    extra_hosts:
+      - "host.docker.internal:host-gateway"   # makes host Ollama reachable on Linux too
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:5001/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+volumes:
+  ollama_data:

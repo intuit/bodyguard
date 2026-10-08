@@ -1,0 +1,20 @@
+# Core LangChain stack
+langchain>=0.3.0
+langchain-community>=0.3.0
+langchain-ollama>=0.2.0
+langchain-text-splitters>=0.3.0
+faiss-cpu>=1.8.0
+rank-bm25>=0.2.2          # lexical half of the hybrid retriever
+
+# Web app
+flask>=3.0.0
+
+# Slack bot
+slack-bolt>=1.21.0
+
+# BigQuery integration
+google-cloud-bigquery>=3.0.0
+
+# Utilities
+colorama>=0.4.6
+truststore>=0.9           # trust the OS certificate store (corporate TLS interception); see agent/tls.py

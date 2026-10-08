@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+*.egg-info/
+dist/
+build/
+
+# Vector stores (generated artifacts — rebuild with kb/builder.py)
+vector_store/
+vector_store_*/
+
+# Environment
+.env
+*.env
+.envrc
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Claude Code local settings
+.claude/
+
+# Test / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Misc
+*.log
+
+# Optionally ignore REDTEAM.md if it contains sensitive IPs
+# Uncomment below if your red team ranges are confidential:
+# REDTEAM.md

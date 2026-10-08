@@ -1,0 +1,26 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Generated artifacts — mounted as volumes at runtime
+vector_store/
+vector_store_*/
+
+# Dev / local
+.env
+.envrc
+.DS_Store
+.vscode/
+.idea/
+.claude/
+
+# Docs / non-runtime — exclude all .md, then re-include the ones the app loads at runtime
+*.md
+!agent/prompts.md
+!REDTEAM.md
+LICENSE
+static/
+tests/
+requirements-dev.txt

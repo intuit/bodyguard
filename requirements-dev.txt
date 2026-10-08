@@ -1,0 +1,7 @@
+# Development-only dependencies (not needed to run the agent)
+-r requirements.txt
+
+pytest>=8.0
+
+# Only for `make diagram` (regenerates static/architecture.png)
+matplotlib>=3.8
