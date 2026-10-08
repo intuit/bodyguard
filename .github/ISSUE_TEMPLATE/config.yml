@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security vulnerability
+    url: https://www.intuit.com/privacy/report-vulnerability/
+    about: Please report security vulnerabilities through Intuit's responsible disclosure process, not as a public issue.
+  - name: Code of Conduct concern
+    url: mailto:TechOpenSource@intuit.com
+    about: Report a Code of Conduct violation to Intuit Tech Open Source.
